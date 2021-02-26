@@ -1,0 +1,19 @@
+{
+    "name": "bkqw/log",
+    "description": "log",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "bkqw",
+            "email": "542432385@qq.com"
+        }
+    ],
+    "require": {
+        "laravel/lumen-framework": "^6.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Bkqw\\log\\": "src"
+        }
+    }
+}
