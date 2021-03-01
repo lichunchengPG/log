@@ -15,5 +15,12 @@
         "psr-4": {
             "Bkqw\\log\\": "src"
         }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Bkqw\\log\\Providers\\BkqwLogServiceProvider"
+            ]
+        }
     }
 }
