@@ -9,17 +9,17 @@
         }
     ],
     "require": {
-        "laravel/lumen-framework": "^6.0"
+        "laravel/framework": "5.5.*"
     },
     "autoload": {
         "psr-4": {
-            "Bkqw\\log\\": "src"
+            "Bkqw\\Log\\": "src"
         }
     },
     "extra": {
         "laravel": {
             "providers": [
-                "Bkqw\\log\\Providers\\BkqwLogServiceProvider"
+                "Bkqw\\Log\\Providers\\BkqwLogServiceProvider"
             ]
         }
     }
