@@ -1,9 +1,11 @@
 <?php
 
-namespace Bkqw\log\Log\Concretes;
+namespace Bkqw\Log\Log\Concretes;
 
-use Bkqw\log\Exceptions\ServerException;
-use Bkqw\log\Log\Contracts\LogServiceInterface;
+use Bkqw\Log\Exceptions\ServerException;
+use Bkqw\Log\Jobs\LogJob;
+use Bkqw\Log\Log\Contracts\LogServiceInterface;
+use Illuminate\Support\Facades\DB;
 use Monolog\Formatter\FormatterInterface;
 use Monolog\Formatter\LineFormatter;
 use Monolog\Logger;
@@ -24,6 +26,15 @@ abstract class BaseLogService implements LogServiceInterface
     protected $channel = 'logger';
 
     protected $level = Logger::DEBUG;
+
+    protected const DRIVER_DATABASE = 'database';
+
+    protected const DRIVER_FILE = 'file';
+
+    protected const DRIVER = [
+        self::DRIVER_DATABASE,
+        self::DRIVER_FILE,
+    ];
 
     public function __construct()
     {
@@ -78,14 +89,121 @@ abstract class BaseLogService implements LogServiceInterface
 
     /**
      * 写入日志
-     * @param string $message
-     * @param array  $context
+     * @param $message
+     * @param array $context
+     * @param string $driver
+     * @param string $module
      * @author Adam
      * @date 2020/7/28 8:49
      */
-    public function write($message, array $context = array())
+    public function write($message, array $context = [], $driver = '', $module = '')
     {
-        $this->logger->info($message, $context);
+        if ($this->checkLogOpen()) {
+            // 检查context内容字段
+            if (config('bkqw_log.check_fields_toggle', false)) {
+                $this->checkLogFields($context, $this->name);
+            }
+            // 驱动类型
+            $logDriver = config('bkqw_log.log_driver', self::DRIVER_DATABASE);
+            if ($driver && in_array($driver, self::DRIVER)) {
+                $logDriver = $driver;
+            }
+
+            // 异步记录
+            if (config('bkqw_log.async_toggle', false)) {
+                $data = ['message' => $message, 'context' => $context, 'logDriver' => $logDriver,
+                         'type' => $this->name, 'module' => $module];
+                dispatch(new LogJob($this, $data))->onConnection(config('bkqw_log.async_driver', 'redis'));
+            } else {
+                $this->writeLog($message, $context, $logDriver, $this->name, $module);
+            }
+        }
+    }
+
+
+    /**
+     * 获取日志服务别名
+     * @return string
+     */
+    public function getAliasName()
+    {
+        return $this->name . '_log';
+    }
+
+
+    /**
+     * 检测日志服务是否开启
+     * @return bool
+     */
+    public function checkLogOpen()
+    {
+        $logArr       = config('bkqw_log.log_toggle');
+        $logAliasName = $this->getAliasName();
+        // 默认开启服务
+        if (!isset($logArr[$logAliasName]) || $logArr[$logAliasName] === true) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * 写入日志
+     * @param $message
+     * @param $context
+     * @param $logDriver
+     * @param $type
+     * @param $module
+     */
+    public function writeLog($message, $context, $logDriver, $type, $module)
+    {
+        switch ($logDriver) {
+            case self::DRIVER_DATABASE:
+                $content = ['message' => $message, 'context' => $context];
+                $this->writeLogDatabase($content, $type, $module);
+                break;
+            case self::DRIVER_FILE:
+                $this->logger->info($message, $context);
+                break;
+            default:
+                break;
+        }
+    }
+
+    /**
+     * 写入日志数据库
+     * @param $content
+     * @param $type
+     * @param $module
+     */
+    public function writeLogDatabase($content, $type, $module)
+    {
+        DB::connection(config('bkqw_log.database.connection'))
+            ->table(config('bkqw_log.database.log_table'))->insert([
+                'module'     => $module,
+                'type'       => $type,
+                'content'    => json_encode($content, JSON_UNESCAPED_UNICODE),
+                'created_at' => time(),
+                'updated_at' => time(),
+            ]);
+    }
+
+    /**
+     * 检查日志内容字段
+     * @param $context
+     * @param $type
+     * @throws ServerException
+     */
+    public function checkLogFields($context, $type)
+    {
+        $validateFields = config('bkqw_log.validate_fields', []);
+        if ($validateFields && !empty($validateFields[$type])) {
+            foreach ($validateFields[$type] as $field => $value) {
+                if ($value && !isset($context[$field])) {
+                    throw new ServerException($type . '日志内容缺少' . $field . '字段');
+                }
+            }
+        }
     }
 
 }
+

@@ -5,10 +5,15 @@
  * Create at 2020/7/27.
  */
 
-namespace Bkqw\log\Log\Facades;
+namespace Bkqw\Log\Log\Facades;
 
 use Illuminate\Support\Facades\Facade;
 
+/**
+ * Class SftpLogService
+ * @package Bkqw\log\Log\Facades
+ * @method static string write($message, array $context = [], $driver = '', $module = '')
+ */
 class SftpLogService extends Facade
 {
 

@@ -5,7 +5,7 @@
  * Create at 2020/7/27.
  */
 
-namespace Bkqw\log\Log\Concretes;
+namespace Bkqw\Log\Log\Concretes;
 
 class TimerLogService extends BaseLogService
 {

@@ -6,7 +6,7 @@
  * Time:10:26
  */
 
-namespace Bkqw\log\Exceptions;
+namespace Bkqw\Log\Exceptions;
 
 
 class ServerException extends Exception

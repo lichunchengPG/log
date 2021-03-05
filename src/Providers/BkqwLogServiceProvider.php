@@ -6,16 +6,11 @@
  * Time:14:54
  */
 
-namespace Bkqw\log\Providers;
+namespace Bkqw\Log\Providers;
 
 
-use Bkqw\log\Log\Concretes\ApiRouteLogService;
-use Bkqw\log\Log\Concretes\ErrorLogService;
-use Bkqw\log\Log\Concretes\RpcLogService;
-use Bkqw\log\Log\Concretes\SftpLogService;
-use Bkqw\log\Log\Concretes\SQLLogService;
-use Bkqw\log\Log\Concretes\TimerLogService;
 use Illuminate\Support\ServiceProvider;
+use ReflectionClass;
 
 class BkqwLogServiceProvider extends ServiceProvider
 {
@@ -23,35 +18,25 @@ class BkqwLogServiceProvider extends ServiceProvider
 
     public function register()
     {
-        // 绑定api路由日志单例
-        $this->app->singleton('api_route_log', function () {
-            return new ApiRouteLogService();
-        });
-
-        // 绑定系统错误日志单例
-        $this->app->singleton('error_log', function () {
-            return new ErrorLogService();
-        });
-
-        // 绑定远程调用日志单例
-        $this->app->singleton('rpc_log', function () {
-            return new RpcLogService();
-        });
-
-        // 绑定定时任务日志单例
-        $this->app->singleton('timer_log', function () {
-            return new TimerLogService();
-        });
-
-        // 绑定慢查询日志单例
-        $this->app->singleton('sql_log', function () {
-            return new SQLLogService();
-        });
-
-        // 绑定sftp调用日志单例
-        $this->app->singleton('sftp_log', function () {
-            return new SftpLogService();
-        });
+        // 注册各类型日志服务
+        $dirPath      = __DIR__ . '/../Log/Concretes/';
+        $preNameSpace = 'Bkqw\Log\Log\Concretes\\';
+        if (is_dir($dirPath)) {
+            $dirHandle = opendir($dirPath);
+            while (false !== ($fileName = readdir($dirHandle))) {
+                if ($fileName !== '.' && $fileName !== '..') {
+                    $fileName = str_replace('.php', '', $fileName);
+                    $ref      = new ReflectionClass($preNameSpace . $fileName);
+                    if (!$ref->isAbstract()) {
+                        $instance  = $ref->newInstance();
+                        $aliasName = $instance->getAliasName();
+                        $this->app->singleton($aliasName, function () use ($instance) {
+                            return $instance;
+                        });
+                    }
+                }
+            }
+        }
     }
 
     public function boot()
@@ -61,6 +46,6 @@ class BkqwLogServiceProvider extends ServiceProvider
 
     public function provides()
     {
-       return ['api_route_log', 'error_log', 'rpc_log', 'timer_log', 'sql_log', 'sftp_log'];
+        return ['api_route_log', 'error_log', 'rpc_log', 'timer_log', 'sql_log', 'sftp_log'];
     }
 }

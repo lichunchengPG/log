@@ -6,7 +6,7 @@
  * Time:10:25
  */
 
-namespace Bkqw\log\Exceptions;
+namespace Bkqw\Log\Exceptions;
 
 
 class Exception extends \Exception

@@ -1,10 +1,6 @@
 <?php
 
-namespace Bkqw\log\Log\Contracts;
-
-use Monolog\Formatter\FormatterInterface;
-use Monolog\Formatter\LineFormatter;
-use Monolog\Logger;
+namespace Bkqw\Log\Log\Contracts;
 
 /**
  * Author: Adam
@@ -13,6 +9,6 @@ use Monolog\Logger;
 interface LogServiceInterface
 {
 
-    public function write($message, array $context = array());
+    public function write($message, array $context = []);
 
 }
