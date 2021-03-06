@@ -8,7 +8,7 @@ use Illuminate\Database\Migrations\Migration;
  * 生成日志数据库表
  * Class CreateLogTables
  */
-class CreateLogTables extends Migration
+class CreateLogTable extends Migration
 {
     /**
      * Run the migrations.
